@@ -1,7 +1,7 @@
 import { Box, CssVarsProvider, styled } from "@mui/joy";
 import { StrictMode, type FunctionComponent } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router";
+import { HashRouter, Navigate, Route, Routes } from "react-router";
 import "./index.scss";
 import useUserStore from "./stores/user.ts";
 import theme from "./theme.ts";
@@ -43,7 +43,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <CssVarsProvider theme={theme} defaultMode="dark" defaultColorScheme="dark">
       <Main>
-        <BrowserRouter>
+        <HashRouter>
           <Routes>
             <Route
               path="/"
@@ -71,7 +71,7 @@ createRoot(document.getElementById("root")!).render(
               }
             />
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </Main>
     </CssVarsProvider>
   </StrictMode>
