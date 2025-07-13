@@ -30,9 +30,10 @@ export function getThirtyDaysWeights(user: string): Promise<Weight[]> {
     .collection("weights")
     .getList(1, 30, {
       filter: `user = "${user}"`,
-      sort: "+created",
+      sort: "-created",
     })
-    .then((res) => res.items.map(recordToWeight));
+    .then((res) => res.items.map(recordToWeight))
+    .then((res) => res.reverse());
 }
 
 export function getAllTimeOldestWeight(user: string): Promise<Weight | null> {
