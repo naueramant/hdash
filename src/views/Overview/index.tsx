@@ -1,5 +1,5 @@
 import { Button, Card, Stack, Typography, useTheme } from "@mui/joy";
-import { useEffect, useState, type FunctionComponent } from "react";
+import { useEffect, useMemo, useState, type FunctionComponent } from "react";
 import type { Weight } from "../../models/weights";
 
 const Overview: FunctionComponent = () => {
@@ -36,11 +36,49 @@ const Overview: FunctionComponent = () => {
     getThirtyDaysWeights(userStore.user.name).then((fetchedWeights) => {
       setWeights(fetchedWeights);
     });
-
     getAllTimeOldestWeight(userStore.user.name).then((oldestWeight) => {
       setAllTimeOldestWeight(oldestWeight);
     });
   }, [userStore.user]);
+
+  const chartData = useMemo(() => {
+    if (weights.length === 0) return [];
+
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    const data = [];
+    let lastKnownWeight = weights[0]?.weight || 0;
+
+    for (
+      let d = new Date(thirtyDaysAgo);
+      d <= today;
+      d.setDate(d.getDate() + 1)
+    ) {
+      const dateStr = d.toISOString().split("T")[0];
+      const weightEntry = weights.find(
+        (w) => new Date(w.created).toISOString().split("T")[0] === dateStr
+      );
+
+      if (weightEntry) {
+        lastKnownWeight = weightEntry.weight;
+        data.push({
+          created: d.getTime(),
+          weight: weightEntry.weight,
+          isReported: true,
+        });
+      } else {
+        data.push({
+          created: d.getTime(),
+          weight: lastKnownWeight,
+          isReported: false,
+        });
+      }
+    }
+
+    return data;
+  }, [weights]);
 
   const t = useTheme();
 
@@ -69,20 +107,20 @@ const Overview: FunctionComponent = () => {
       >
         <StatCard
           title="Weight"
-          value={`${newestWeight?.weight.toFixed(1) ?? "0.0"} kg`}
+          value={`${newestWeight?.weight.toFixed(2) ?? "0.0"} kg`}
         />
-        <StatCard title="BMI" value={bmiResult?.bmi.toFixed(1) ?? "?"} />
+        <StatCard title="BMI" value={bmiResult?.bmi.toFixed(2) ?? "?"} />
         <StatCard
           title="Body Fat"
-          value={`${bodyFatEstimate?.bodyFatPercentage.toFixed(1)}%`}
+          value={`${bodyFatEstimate?.bodyFatPercentage.toFixed(2)}%`}
         />
         <StatCard
           title="30 days change"
-          value={`${thirtyDaysDelta.toFixed(1)} kg`}
+          value={`${thirtyDaysDelta.toFixed(2)} kg`}
         />
         <StatCard
           title="Total Change"
-          value={`${allTimeDelta.toFixed(1)} kg`}
+          value={`${allTimeDelta.toFixed(2)} kg`}
         />
       </Stack>
 
@@ -92,29 +130,38 @@ const Overview: FunctionComponent = () => {
         }}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={weights}>
+          <BarChart data={chartData}>
             <XAxis
               dataKey="created"
               axisLine={false}
               tickLine={false}
+              tick={{ fontSize: 14 }}
               tickFormatter={(timestamp) => {
                 const date = new Date(timestamp);
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                });
+                return `${date.getDate()}/${date.getMonth() + 1}`;
               }}
             />
             <Bar
               dataKey="weight"
-              fill={t.palette.primary[100]}
               radius={[4, 4, 4, 4]}
               label={{
                 position: "center",
                 fill: t.palette.primary[900],
-                formatter: (value: number) => `${value.toFixed(1)} kg`,
+                fontSize: 12,
+                formatter: (value: number) => `${value.toFixed(2)} kg`,
               }}
-            />
+            >
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={
+                    entry.isReported
+                      ? t.palette.primary[100]
+                      : t.palette.warning[300]
+                  }
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </Card>
@@ -166,7 +213,7 @@ const StatCard: FunctionComponent<StatCardProps> = (props) => {
 };
 
 import { useNavigate } from "react-router";
-import { Bar, BarChart, ResponsiveContainer, XAxis } from "recharts";
+import { Bar, BarChart, Cell, ResponsiveContainer, XAxis } from "recharts";
 import { getAllTimeOldestWeight, getThirtyDaysWeights } from "../../api/weight";
 import TopBar from "../../components/TopBar";
 import { getUserAge } from "../../models/user";
