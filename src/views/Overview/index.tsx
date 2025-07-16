@@ -115,7 +115,7 @@ const Overview: FunctionComponent = () => {
           value={`${bodyFatEstimate?.bodyFatPercentage.toFixed(2)}%`}
         />
         <StatCard
-          title="30 days change"
+          title={`${chartData.length} Days Change`}
           value={`${thirtyDaysDelta.toFixed(2)} kg`}
         />
         <StatCard
@@ -129,6 +129,9 @@ const Overview: FunctionComponent = () => {
           flex: 1,
         }}
       >
+        <Typography level="title-md" color="neutral">
+          Last {chartData.length} days recorded.
+        </Typography>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData}>
             <XAxis
